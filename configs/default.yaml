@@ -15,7 +15,7 @@ circuit_breaker:
 
 cache:
   enabled: true
-  backend: redis
+  backend: memory
   ttl_seconds: 300
   similarity_threshold: 0.92
   redis_url: "redis://localhost:6379/0"
