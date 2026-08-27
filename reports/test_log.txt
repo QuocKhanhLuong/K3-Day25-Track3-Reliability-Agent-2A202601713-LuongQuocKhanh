@@ -1,0 +1,40 @@
+Day 25 Reliability Engineering - Final Validation Evidence
+Date: 2026-08-27
+Environment: macOS, Python 3.14.6
+
+Docker / Redis
+--------------
+$ docker compose exec redis redis-cli ping
+PONG
+
+Lint
+----
+$ make lint
+ruff check src tests scripts
+All checks passed!
+
+Type check
+----------
+$ make typecheck
+mypy src
+Success: no issues found in 8 source files
+
+Full test suite
+---------------
+$ make test
+pytest -q
+...................................XXXXXXX                               [100%]
+35 passed, 7 xpassed in 3.55s
+
+Redis test suite
+----------------
+$ pytest tests/test_redis_cache.py -v
+
+tests/test_redis_cache.py::test_redis_connection PASSED
+tests/test_redis_cache.py::test_set_and_exact_get PASSED
+tests/test_redis_cache.py::test_ttl_expiry PASSED
+tests/test_redis_cache.py::test_shared_state_across_instances PASSED
+tests/test_redis_cache.py::test_privacy_query_not_cached PASSED
+tests/test_redis_cache.py::test_false_hit_different_years PASSED
+
+6 passed in 1.59s
