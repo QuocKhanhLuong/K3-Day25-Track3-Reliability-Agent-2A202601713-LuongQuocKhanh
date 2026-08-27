@@ -22,7 +22,7 @@ class CircuitBreakerConfig(BaseModel):
 
 class CacheConfig(BaseModel):
     enabled: bool = True
-    backend: str = "memory"  # "memory" or "redis"
+    backend: str = "memory"
     ttl_seconds: int = Field(gt=0)
     similarity_threshold: float = Field(ge=0.0, le=1.0)
     redis_url: str = "redis://localhost:6379/0"
@@ -44,6 +44,7 @@ class LabConfig(BaseModel):
     cache: CacheConfig
     load_test: LoadTestConfig
     scenarios: list[ScenarioConfig] = Field(default_factory=list)
+    seed: int = 25
 
 
 def load_config(path: str | Path) -> LabConfig:

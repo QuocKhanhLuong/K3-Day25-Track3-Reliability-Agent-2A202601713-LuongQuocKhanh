@@ -1,5 +1,7 @@
 name: CI
+
 on: [push, pull_request]
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -9,4 +11,37 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -e ".[dev]"
+      - run: docker compose up -d
+      - name: Wait for Redis
+        run: |
+          for attempt in {1..15}; do
+            if docker compose exec -T redis redis-cli ping | grep -q PONG; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - run: make lint
+      - run: make typecheck
       - run: make test
+      - run: docker compose exec -T redis redis-cli FLUSHDB
+      - run: make run-chaos
+      - name: Show reliability metrics
+        run: cat reports/metrics.json
+      - name: Prove Redis shared state
+        run: |
+          python - <<'PY'
+          from reliability_lab.cache import SharedRedisCache
+
+          first = SharedRedisCache("redis://localhost:6379/0", 60, 0.5, "rl:evidence:")
+          second = SharedRedisCache("redis://localhost:6379/0", 60, 0.5, "rl:evidence:")
+          first.flush()
+          first.set("shared query", "shared response")
+          value, score = second.get("shared query")
+          print(f"shared_state_value={value} score={score}")
+          assert value == "shared response"
+          first.close()
+          second.close()
+          PY
+      - name: Show Redis cache keys
+        run: docker compose exec -T redis redis-cli KEYS "rl:cache:*"

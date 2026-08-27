@@ -7,30 +7,35 @@ providers:
     fail_rate: 0.05
     base_latency_ms: 260
     cost_per_1k_tokens: 0.006
+
 circuit_breaker:
   failure_threshold: 3
   reset_timeout_seconds: 2
   success_threshold: 1
+
 cache:
   enabled: true
-  backend: memory          # "memory" (default) or "redis" (requires docker compose up -d)
+  backend: redis
   ttl_seconds: 300
   similarity_threshold: 0.92
   redis_url: "redis://localhost:6379/0"
+
 load_test:
   requests: 100
 
-# Chaos scenarios: each overrides provider fail_rate for targeted testing.
-# TODO(student): Add more scenarios or tweak these.
+seed: 25
+
 scenarios:
   - name: primary_timeout_100
-    description: "Primary provider fails 100% — all traffic should fallback"
+    description: "Primary fails 100%; traffic should fall back to backup"
     provider_overrides:
       primary: 1.0
   - name: primary_flaky_50
-    description: "Primary provider fails 50% — circuit should oscillate"
+    description: "Primary fails 50%; the circuit should open and later recover"
     provider_overrides:
       primary: 0.5
   - name: all_healthy
-    description: "Baseline — both providers healthy"
-    provider_overrides: {}
+    description: "Both providers are healthy; primary should serve cache misses"
+    provider_overrides:
+      primary: 0.0
+      backup: 0.0
