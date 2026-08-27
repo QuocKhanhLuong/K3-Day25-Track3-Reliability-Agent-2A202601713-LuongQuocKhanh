@@ -8,6 +8,8 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
+from redis.exceptions import RedisError
+
 PRIVACY_PATTERNS = re.compile(
     r"\b(balance|password|credit.card|ssn|social.security|user.\d+|account.\d+)\b",
     re.IGNORECASE,
@@ -140,7 +142,7 @@ class SharedRedisCache:
         """Check Redis connectivity."""
         try:
             return bool(self._redis.ping())
-        except Exception:
+        except RedisError:
             return False
 
     def get(self, query: str) -> tuple[str | None, float]:
