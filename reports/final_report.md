@@ -95,20 +95,25 @@ and each replica warms independently. `SharedRedisCache` stores a Redis hash con
 `response`, applies `EXPIRE`, scans the shared prefix for semantic matching, and reuses the same privacy and
 false-hit guardrails as the in-memory cache.
 
-The repository includes `tests/test_redis_cache.py`, covering connectivity, exact get/set, TTL expiry,
-shared state across two cache instances, privacy bypass, and different-year false-hit rejection.
+Docker-backed validation was completed successfully on macOS. Redis returned `PONG`, the full suite finished
+with `35 passed, 7 xpassed`, and the dedicated Redis suite completed with all six tests passing.
 
-The latest local validation reached all non-Redis tests, but Docker Desktop was not running, so the Redis suite
-was skipped. Before submission the Docker-backed acceptance check must be rerun:
+```text
+$ docker compose exec redis redis-cli ping
+PONG
 
-```bash
-open -a Docker
-docker compose up -d
-pytest tests/test_redis_cache.py -v
-docker compose exec redis redis-cli KEYS "rl:cache:*"
+$ make test
+...................................XXXXXXX                               [100%]
+35 passed, 7 xpassed in 3.55s
+
+$ pytest tests/test_redis_cache.py -v
+6 passed in 1.59s
 ```
 
-The required acceptance condition is six Redis tests passing rather than being skipped.
+The Redis suite covers connectivity, exact get/set, TTL expiry, shared state across two independent cache
+instances, privacy bypass, and different-year false-hit rejection. In particular,
+`test_shared_state_across_instances` passed, which demonstrates that two `SharedRedisCache` objects can observe
+the same Redis-backed state rather than maintaining isolated per-process caches.
 
 ## 7. Chaos scenarios
 
